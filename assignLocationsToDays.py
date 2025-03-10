@@ -281,7 +281,8 @@ def load_locations(location_filename, scores_filename):
     for item in data:
         location_id = int(item["location_id"])
         category = item["category"].get("name","")
-        if category != "restaurant" and location_id not in seen:
+        score = score_map.get(location_id,0)
+        if score > 50 and category != "restaurant" and location_id not in seen:
             seen.add(location_id)
             locations.append(Location(
                 location_id=location_id,
@@ -289,7 +290,7 @@ def load_locations(location_filename, scores_filename):
                 latitude=float(item["latitude"]),
                 longitude=float(item["longitude"]),
                 category=item["category"].get("name",""),
-                score=score_map.get(location_id, 0)  # スコアがない場合は0を設定
+                score=score  # スコアがない場合は0を設定
             ))
     return locations
 
@@ -331,7 +332,8 @@ def assignLocationsToDays():
             onedayLocations.append( {
                 "location_id": item.location_id,
                 "name": item.name,
-                "latLong": f"{item.latitude},{item.longitude}"
+                "latLong": f"{item.latitude},{item.longitude}",
+                "score": item.score,
             })
             print( f'    location_id: {item.location_id}: name: {item.name} ')
         dailyLocations.append( onedayLocations )

@@ -9,7 +9,9 @@ def printItinerary( itinerary ):
         print( f'Day {i+1}:')
         num_locations = len(oneDay.get("locations"))
         for j in range(num_locations):
-            print( f"  {oneDay.get('locations')[j].get('name')}")
+            name = oneDay.get('locations')[j].get('name')
+            score = oneDay.get('locations')[j].get('score')
+            print( f"  {name} (score={score})")
             if j < num_locations-1:
                 print( f"      {oneDay.get('transport_time')[j]} minutes's transportation")
 

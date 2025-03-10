@@ -1,6 +1,6 @@
 # Traveler's requirements
 user_requirement = """
-"I want to travel to Kyoto City and its surrounding areas, including nearby cities in Kyoto Prefecture such as Uji City.
+I want to travel to Kyoto City and its surrounding areas, including nearby cities in Kyoto Prefecture such as Uji City.
 I am interested in traditional Japanese culture, architecture, and events.
 Additionally, I am also interested in beautiful landscapes
 """
