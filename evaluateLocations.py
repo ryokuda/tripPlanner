@@ -15,7 +15,6 @@ def extract_location_details():
 
     print(f'    Load location detailed information from "{parameters.run_dir}4.locationDetails.json"')
 
-    print(f'    Load search parameter from "{parameters.run_dir}4.locationDetails.json"')
     locations = []
 
     for item in data:
