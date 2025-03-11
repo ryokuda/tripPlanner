@@ -113,8 +113,10 @@ def evaluateLocations():
         print("done.")
         scores += result
 
+    # Sort the array in descending order of the "score" value
+    sorted_scores = sorted(scores, key=lambda x: x["score"], reverse=True)
     with open(parameters.run_dir + "5.locationScores.json", "w", encoding="utf-8") as f:
-        json.dump(scores, f, indent=4, ensure_ascii=False)
+        json.dump(sorted_scores, f, indent=4, ensure_ascii=False)
     print(f'    Store location score to "{parameters.run_dir}5.locationScores.json"')
 
 

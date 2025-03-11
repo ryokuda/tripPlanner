@@ -62,8 +62,8 @@ def accessEkispertAPI(FROM, TO):
             courses = data["ResultSet"]["Course"]
             course = courses[0] if isinstance(courses, list) else courses
             route = course["Route"]
-            time = (int(route["timeOther"]) if "timeOther" in route else 0) + \
-                   (int(route["timeOnBoard"]) if "timeOnBoard" in route else 0) + \
+            #time = (int(route["timeOther"]) if "timeOther" in route else 0) + \
+            time = (int(route["timeOnBoard"]) if "timeOnBoard" in route else 0) + \
                    (int(route["timeWalk"]) if "timeWalk" in route else 0)
             #print(f"  Travel time: {time} min")
             return time, route

@@ -30,7 +30,7 @@ class TreeNode:
         _dfs_assign_times( root, root )
 
     @staticmethod
-    def select_valid_nodes(root, num_days):
+    def select_valid_node( root ):
         """
         二分木を探索し、valid=True のノードをスコア順にソートし、先祖・子孫関係を考慮しながら4つのノードを選択する。
         :param root: 二分木のルートノード
@@ -63,10 +63,6 @@ class TreeNode:
 
             return nodes
 
-        def find_common_ancestors(node_a, node_b, selected):
-            """ node_a と node_b の共通の先祖を selected の中から探す """
-            return {c for c in selected if is_ancestor(c, node_a) and is_ancestor(c, node_b)}
-
         # 1. valid=True のノードをすべて取得し、score の降順でソート
         valid_nodes = get_all_valid_nodes(root)
         valid_nodes = custom_sort(valid_nodes)
@@ -74,49 +70,7 @@ class TreeNode:
         if not valid_nodes:
             return []  # valid=True のノードが1つもない場合
 
-        # 2. 最もスコアが高いノードを選択し、初期化
-        selected = {valid_nodes[0]}  # 選択済みのノード
-        candidate = set()  # 親子関係のあるノードを格納する候補
-
-        # 3. valid_nodes を順に見て、selected に追加
-        for i in range(1, len(valid_nodes)):
-
-            if len(selected) >= num_days:
-                break  # num_daysつのノードを選んだら終了
-
-            node = valid_nodes[i]
-
-            # 先祖が selected に存在するかチェック
-            if not any(is_ancestor(ancestor, node) for ancestor in selected):
-                #print( f'{i}:added to selected')
-                #print( is_ancestor( valid_nodes[1],valid_nodes[0]))
-                selected.add(node)  # 直接 selected に追加
-            else:
-                candidate.add(node)  # 親子関係があるなら候補に追加
-
-                # 4. candidate から共通の先祖を削除する
-                found = False  # 二重ループを抜けるフラグ
-                for a in list(candidate):
-                    for b in list(candidate):
-                        if a != b and not is_ancestor(a, b) and not is_ancestor(b, a):
-                            # A, B に共通の先祖が selected 内にあるか
-                            common_ancestors = find_common_ancestors(a, b, selected)
-
-                            if common_ancestors:
-                                # 共通の先祖を selected から削除
-                                selected -= common_ancestors
-                                # A, B を selected に追加
-                                selected.add(a)
-                                selected.add(b)
-                                # A, B を candidate から削除
-                                candidate.remove(a)
-                                candidate.remove(b)
-                                found = True  # 二重ループを抜けるためのフラグ
-                                break  # 内側のループを抜ける
-                    if found:
-                        break  # 外側のループを抜ける
-
-        return list(selected)
+        return valid_nodes[0]
 
     def get_leaf_nodes(self):
         """このノードのサブツリーに含まれる全てのリーフノードをリストとして返す"""
@@ -297,52 +251,60 @@ def load_locations(location_filename, scores_filename):
 def assignLocationsToDays():
     print( "" )
     print( "------ Step 4: Assign locations to eah day ------")
+
     # 全ロケーションの情報とスコア値を読み込む
-    locations = load_locations(parameters.run_dir+"4.locationDetails.json", parameters.run_dir+"5.locationScores.json")
-
-    # 距離が近いロケーションをマージして２分木を生成する
-    root = cluster_locations( locations )
-
-    # 2分木のノードの先祖/子孫の判断を高速に行うためのデータを付ける
-    TreeNode.assign_dfs_times( root )
-
-    # 2分木を、num_days個のサブツリーに分ける。各々が１日で訪問するLocationを示す
-    selected_nodes = TreeNode.select_valid_nodes(root, num_days=parameters.NUM_DAYS )
-
-    #print("Selected Nodes:")
-    #for node in selected_nodes:
-    #    print(f"Location range: {node.range}, Time: {node.time}, Score: {node.score}")
-
-    # num_days個のサブツリーのリーフノードのLocationを取得して２重リストにする
-    selectedLocations=[]
-    for node in selected_nodes:
-        leaf_nodes = node.get_leaf_nodes()
-        leaf_nodes.sort(key=lambda x: x.score, reverse=True )
-        selectedLocations.append(leaf_nodes)
-
-    # 各日程の先頭5カ所のLocationを取得する
-    max_locations=parameters.TIME_TH
-    locationCandidates = [ sublist[:max_locations] for sublist in selectedLocations ]
+    allLocations = load_locations(parameters.run_dir+"4.locationDetails.json", parameters.run_dir+"5.locationScores.json")
 
     dailyLocations = []
-    for i, day in enumerate(locationCandidates):
+    while len( dailyLocations ) < parameters.NUM_DAYS:
+
+        # 距離が近いロケーションをマージして２分木を生成する
+        root = cluster_locations( allLocations )
+
+        # 2分木のノードの先祖/子孫の判断を高速に行うためのデータを付ける
+        TreeNode.assign_dfs_times( root )
+
+        # 2分木を、num_days個のサブツリーに分ける。各々が１日で訪問するLocationを示す
+        selected_node = TreeNode.select_valid_node(root)
+        if selected_node == []:
+            break
+
+        # num_days個のサブツリーのリーフノードのLocationを取得する
+        sorted_locations = sorted( selected_node.get_leaf_nodes(), key=lambda x: x.score, reverse=True )
+
+        # 各日程の先頭 parameters.TIME_TH カ所のLocationを取得する
+        max_locations=parameters.TIME_TH
+        selected_locations = sorted_locations[:max_locations]
+        dailyLocations.append( selected_locations)
+
+        if len( dailyLocations ) >= parameters.NUM_DAYS:
+            break
+
+        # 選んだLocationを、リスト allLocations から取り除く
+        for selected in selected_locations:
+            allLocations = [ loc for loc in allLocations if loc.location_id != selected.location_id ]
+
+    dailyLocationsWithSmallData = []
+    for i, day in enumerate(dailyLocations):
         print( f"Day{i+1}:" )
-        onedayLocations = []
+        oneDayLocations = []
         for item in day:
-            onedayLocations.append( {
+            oneDayLocations.append( {
                 "location_id": item.location_id,
                 "name": item.name,
                 "latLong": f"{item.latitude},{item.longitude}",
                 "score": item.score,
             })
-            print( f'    location_id: {item.location_id}: name: {item.name} ')
-        dailyLocations.append( onedayLocations )
+            print( f'    location_id: {item.location_id}: name: {item.name} (score={item.score})')
+        dailyLocationsWithSmallData.append( oneDayLocations )
 
-    #print( dailyLocations )
+    #print( dailyLocationsWithSmallData )
     with open(parameters.run_dir+"6.dailyLocations.json", "w", encoding="utf-8") as f:
-        json.dump(dailyLocations, f, indent=4, ensure_ascii=False)
+        json.dump(dailyLocationsWithSmallData, f, indent=4, ensure_ascii=False)
 
-    return dailyLocations
+    return dailyLocationsWithSmallData
+
+
 
 if __name__ == "__main__":
     assignLocationsToDays()

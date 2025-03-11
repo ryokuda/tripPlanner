@@ -6,13 +6,13 @@ Additionally, I am also interested in beautiful landscapes
 """
 
 # Number of days in the itinerary
-NUM_DAYS = 3
+NUM_DAYS = 4
 
 # Directory to store execution results
 run_dir="./runs/run003/"
 
 # Radius of the circle indicating the geographical range of locations visited in a day (unit: km)
-DISTANCE_TH = 20.0
+DISTANCE_TH = 5.0
 
 # Maximum number of locations to visit in a day
 TIME_TH = 6
